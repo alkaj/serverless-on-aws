@@ -17,7 +17,10 @@ export const getTodosForUser = async (userId: string) => {
     return todos
   } catch (e) {
     logger.error('Could not get todos', { e })
-    throw createError()
+    return createError(
+      500,
+      'A fatal unexpected error prevented us from getting Todos'
+    )
   }
 }
 
@@ -26,6 +29,12 @@ export const createTodo = async (
   newTodo: CreateTodoRequest
 ) => {
   const logger = createLogger('CreateTodo')
+
+  if (newTodo.name == '') {
+    logger.error('Todo name cannot be empty')
+    return createError(400, 'Todo name cannot be empty')
+  }
+
   const todoId = uuid.v4()
   const createdAt = new Date().toISOString()
   const attachmentUrl = `https://${process.env.ATTACHMENT_S3_BUCKET}.s3.amazonaws.com/${todoId}`
