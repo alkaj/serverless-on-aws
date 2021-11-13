@@ -1,5 +1,5 @@
-// import * as AWS from 'aws-sdk'
-// import * as AWSXRay from 'aws-xray-sdk'
+import * as AWS from 'aws-sdk'
+import * as AWSXRay from 'aws-xray-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
 import { createLogger } from '../utils/logger'
 import { TodoItem } from '../models/TodoItem'
@@ -14,7 +14,8 @@ const logger = createLogger('TodosAccess')
 export const TodosAccess = {
   async getTodos(userId: string): Promise<TodoItem[]> {
     logger.info('Getting all todos for user', { userId })
-    let doc = new DocumentClient()
+    let doc = new DocumentClient({ service: new AWS.DynamoDB() })
+    AWSXRay.captureAWSClient((doc as any).service)
     const result = await doc
       .query({
         TableName: process.env.TODOS_TABLE,
@@ -30,7 +31,8 @@ export const TodosAccess = {
   },
 
   async createTodo(todo: TodoItem): Promise<TodoItem> {
-    let doc = new DocumentClient()
+    let doc = new DocumentClient({ service: new AWS.DynamoDB() })
+    AWSXRay.captureAWSClient((doc as any).service)
     const result = await doc
       .put({
         TableName: process.env.TODOS_TABLE,
@@ -45,7 +47,8 @@ export const TodosAccess = {
     todoId: string,
     todoUpdate: TodoUpdate
   ): Promise<TodoItem> {
-    let doc = new DocumentClient()
+    let doc = new DocumentClient({ service: new AWS.DynamoDB() })
+    AWSXRay.captureAWSClient((doc as any).service)
     const result = await doc
       .update({
         TableName: process.env.TODOS_TABLE,
@@ -68,7 +71,8 @@ export const TodosAccess = {
   },
 
   async deleteTodo(userId: string, todoId: string): Promise<string> {
-    let doc = new DocumentClient()
+    let doc = new DocumentClient({ service: new AWS.DynamoDB() })
+    AWSXRay.captureAWSClient((doc as any).service)
     await doc
       .delete({
         TableName: process.env.TODOS_TABLE,
