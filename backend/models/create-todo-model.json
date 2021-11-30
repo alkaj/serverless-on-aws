@@ -6,6 +6,9 @@
     "name": {
       "type": "string"
     },
+    "email": {
+      "type": "string"
+    },
     "dueDate": {
       "type": "string"
     }

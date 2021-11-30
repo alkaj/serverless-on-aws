@@ -3,5 +3,6 @@
  */
 export interface CreateTodoRequest {
   name: string
+  email: string
   dueDate: string
 }

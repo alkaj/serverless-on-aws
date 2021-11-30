@@ -44,6 +44,7 @@ export const createTodo = async (
     userId,
     todoId,
     createdAt,
+    email: newTodo.email,
     name: newTodo.name,
     dueDate: newTodo.dueDate,
     done: false,
