@@ -25,6 +25,7 @@ interface TodosProps {
 
 interface TodosState {
   todos: Todo[]
+  filter: string,
   newTodoName: string
   newTodoDueDate: string
   loadingTodos: boolean
@@ -35,9 +36,13 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     todos: [],
     newTodoName: '',
     newTodoDueDate: '',
+    filter: '',
     loadingTodos: true
   }
 
+  handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({ filter: event.target.value })
+  }
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newTodoName: event.target.value })
   }
@@ -129,7 +134,11 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
         <Grid.Column width={1} floated="left">
           <Input
           placeholder="Find a Todo..."
+          onChange={this.handleFilterChange}
             />
+        </Grid.Column>
+        <Grid.Column>
+          <Divider />
         </Grid.Column>
         <Grid.Column width={1} floated="right">
           <Input
@@ -178,7 +187,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   renderTodosList() {
     return (
       <Grid padded>
-        {this.state.todos.map((todo, pos) => {
+        {this.state.todos.filter(todo => todo.name.toLowerCase().indexOf(this.state.filter.toLowerCase()) >= 0).map((todo, pos) => {
           return (
             <Grid.Row key={todo.todoId}>
               <Grid.Column width={1} verticalAlign="middle">
