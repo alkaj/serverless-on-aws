@@ -26,6 +26,7 @@ interface TodosProps {
 interface TodosState {
   todos: Todo[]
   newTodoName: string
+  newTodoDueDate: string
   loadingTodos: boolean
 }
 
@@ -33,11 +34,20 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   state: TodosState = {
     todos: [],
     newTodoName: '',
+    newTodoDueDate: '',
     loadingTodos: true
   }
 
   handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     this.setState({ newTodoName: event.target.value })
+  }
+  handleDueDateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (this.timeTravel(event.target.value)) {
+      alert("We are not able to provide time travel features yet, please enter a date in the near future")
+      this.setState({ newTodoDueDate: '' })
+      event.target.value = ''
+    }
+    else this.setState({ newTodoDueDate: event.target.value })
   }
 
   onEditButtonClick = (todoId: string) => {
@@ -46,14 +56,14 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
 
   onTodoCreate = async (event: React.ChangeEvent<HTMLButtonElement>) => {
     try {
-      const dueDate = this.calculateDueDate()
       const newTodo = await createTodo(this.props.auth.getIdToken(), {
         name: this.state.newTodoName,
-        dueDate
+        dueDate: this.state.newTodoDueDate
       })
       this.setState({
         todos: [...this.state.todos, newTodo],
-        newTodoName: ''
+        newTodoName: '',
+        newTodoDueDate: ''
       })
     } catch {
       alert('Todo creation failed')
@@ -116,7 +126,16 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   renderCreateTodoInput() {
     return (
       <Grid.Row>
-        <Grid.Column width={16}>
+        <Grid.Column width={1} floated="left">
+          <Input
+          placeholder="Find a Todo..."
+            />
+        </Grid.Column>
+        <Grid.Column width={1} floated="right">
+          <Input
+            placeholder="To change the world..."
+            onChange={this.handleNameChange}
+          />
           <Input
             action={{
               color: 'teal',
@@ -125,10 +144,10 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
               content: 'New task',
               onClick: this.onTodoCreate
             }}
-            fluid
-            actionPosition="left"
-            placeholder="To change the world..."
-            onChange={this.handleNameChange}
+          placeholder="Due date"
+          type="date"
+          format="yyyy-mm-dd"
+          onChange={this.handleDueDateChange}
           />
         </Grid.Column>
         <Grid.Column width={16}>
@@ -210,5 +229,17 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
     date.setDate(date.getDate() + 7)
 
     return dateFormat(date, 'yyyy-mm-dd') as string
+  }
+
+  timeTravel(date: string): boolean {
+    const today = new Date()
+    today.setDate(today.getDate() - 1)
+    const selectedDate = new Date(date)
+    // make sure selected date is not in the past
+    if (selectedDate < today) {
+      return true
+    } else {
+      return false
+    }
   }
 }
