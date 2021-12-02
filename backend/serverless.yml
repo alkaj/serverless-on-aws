@@ -33,6 +33,9 @@ provider:
     # Enable API Gateway logs
     restApi: true
 
+  eventBridge:
+    useCloudFormation: true
+
   iam:
     role:
       statements:
@@ -45,6 +48,17 @@ provider:
 functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
+
+  DueDateChecker:
+    handler: src/lambda/eventBridge/CheckDueDate.handler
+    events:
+      - eventBridge:
+          schedule: rate(10 minutes)
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - ses:SendEmail
+        Resource: '*'
 
   # TODO: Configure this function -
   # Provide iamRoleStatements property for performing Actions on DynamoDB
@@ -82,6 +96,10 @@ functions:
         Action:
           - dynamodb:PutItem
         Resource: !GetAtt TodosTable.Arn
+      - Effect: Allow
+        Action:
+          - ses:VerifyEmailIdentity
+        Resource: '*'
 
   # TODO: Configure this function
   # Provide property for setting up CORS, Authorizer, iamRoleStatements, and request schemas
