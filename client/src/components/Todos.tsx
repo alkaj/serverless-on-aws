@@ -52,7 +52,7 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       this.setState({ newTodoDueDate: '' })
       event.target.value = ''
     }
-    else this.setState({ newTodoDueDate: event.target.value })
+    else this.setState({ newTodoDueDate: new Date(new Date(event.target.value).setHours(23, 59, 59)).toString() })
   }
 
   onEditButtonClick = (todoId: string) => {
@@ -92,11 +92,13 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
       await patchTodo(this.props.auth.getIdToken(), todo.todoId, {
         name: todo.name,
         dueDate: todo.dueDate,
-        done: !todo.done
+        expired: todo.expired,
+        expiring: todo.expiring,
+        done: todo.done ? 0 : 1
       })
       this.setState({
         todos: update(this.state.todos, {
-          [pos]: { done: { $set: !todo.done } }
+          [pos]: { done: { $set: todo.done ? 0 : 1 } }
         })
       })
     } catch {
@@ -187,20 +189,21 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
   renderTodosList() {
     return (
       <Grid padded>
-        {this.state.todos.filter(todo => todo.name.toLowerCase().indexOf(this.state.filter.toLowerCase()) >= 0).map((todo, pos) => {
+        {this.state.todos.filter(todo => todo.done != 1 && todo.name.toLowerCase().indexOf(this.state.filter.toLowerCase()) >= 0).map((todo, pos) => {
           return (
             <Grid.Row key={todo.todoId}>
               <Grid.Column width={1} verticalAlign="middle">
                 <Checkbox
                   onChange={() => this.onTodoCheck(pos)}
-                  checked={todo.done}
+                  checked={todo.done == 1}
                 />
               </Grid.Column>
               <Grid.Column width={10} verticalAlign="middle">
                 {todo.name}
               </Grid.Column>
               <Grid.Column width={3} floated="right">
-                {todo.dueDate}
+                <span style={{display: !todo.done && (todo.expiring || todo.expired) ? 'inline-block' : 'none', border: '1px solid', marginRight: '16px', whiteSpace: 'nowrap', padding: '3px', borderRadius: '8px', color: todo.expired ? 'red' : (todo.expiring ? 'orange': 'white'), borderColor: todo.expired ? 'red' : (todo.expiring ? 'orange': 'white')}}>{todo.expired ? 'Over Due !' : (todo.expiring ? 'Due Today!' : '')}</span>
+                {new Date(todo.dueDate).toLocaleDateString()}
               </Grid.Column>
               <Grid.Column width={1} floated="right">
                 <Button
@@ -221,7 +224,50 @@ export class Todos extends React.PureComponent<TodosProps, TodosState> {
                 </Button>
               </Grid.Column>
               {todo.attachmentUrl && (
-                <Image src={todo.attachmentUrl} size="small" wrapped />
+                <Image src={todo.attachmentUrl} size="small" alt="." style={{color: 'white'}} wrapped />
+              )}
+              <Grid.Column width={16}>
+                <Divider />
+              </Grid.Column>
+            </Grid.Row>
+          )
+        })}
+        {this.state.todos.filter(todo => todo.done == 1 && todo.name.toLowerCase().indexOf(this.state.filter.toLowerCase()) >= 0).map((todo, pos) => {
+          return (
+            <Grid.Row key={todo.todoId}>
+              <Grid.Column width={1} verticalAlign="middle">
+                <Checkbox
+                  onChange={() => this.onTodoCheck(pos)}
+                  checked={todo.done == 1}
+                />
+              </Grid.Column>
+              <Grid.Column width={10} verticalAlign="middle">
+                {todo.name}
+              </Grid.Column>
+              <Grid.Column width={3} floated="right">
+                <span style={{display: !todo.done && (todo.expiring || todo.expired) ? 'inline-block' : 'none', border: '1px solid', marginRight: '16px', whiteSpace: 'nowrap', padding: '3px', borderRadius: '8px', color: todo.expired ? 'red' : (todo.expiring ? 'orange': 'white'), borderColor: todo.expired ? 'red' : (todo.expiring ? 'orange': 'white')}}>{todo.expired ? 'Over Due !' : (todo.expiring ? 'Due Today!' : '')}</span>
+                {new Date(todo.dueDate).toLocaleDateString()}
+              </Grid.Column>
+              <Grid.Column width={1} floated="right">
+                <Button
+                  icon
+                  color="blue"
+                  onClick={() => this.onEditButtonClick(todo.todoId)}
+                >
+                  <Icon name="pencil" />
+                </Button>
+              </Grid.Column>
+              <Grid.Column width={1} floated="right">
+                <Button
+                  icon
+                  color="red"
+                  onClick={() => this.onTodoDelete(todo.todoId)}
+                >
+                  <Icon name="delete" />
+                </Button>
+              </Grid.Column>
+              {todo.attachmentUrl && (
+                <Image src={todo.attachmentUrl} size="small" alt="." style={{color: 'white'}} wrapped />
               )}
               <Grid.Column width={16}>
                 <Divider />

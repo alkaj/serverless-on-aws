@@ -3,6 +3,8 @@ export interface Todo {
   createdAt: string
   name: string
   dueDate: string
-  done: boolean
+  done: number
+  expired: number
+  expiring: number
   attachmentUrl?: string
 }
