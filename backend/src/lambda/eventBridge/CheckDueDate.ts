@@ -1,4 +1,4 @@
-import { getPendingTodos } from '../../helpers/todos'
+import { getPendingTodos } from '../../business/todos'
 import { TodosAccess } from '../../helpers/todosAcess'
 import { TodoItem } from '../../models/TodoItem'
 
