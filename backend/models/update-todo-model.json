@@ -10,7 +10,13 @@
       "type": "string"
     },
     "done": {
-      "type": "boolean"
+      "type": "number"
+    },
+    "expiring": {
+      "type": "number"
+    },
+    "expired": {
+      "type": "number"
     }
   },
   "required": [

@@ -24,6 +24,20 @@ export const getTodosForUser = async (userId: string) => {
   }
 }
 
+export const getPendingTodos = async () => {
+  const logger = createLogger('GetPendingTodos')
+  try {
+    let todos = await TodosAccess.getPendingTodos()
+    return todos
+  } catch (e) {
+    logger.error('Could not get pending todos', { e })
+    return createError(
+      500,
+      'A fatal unexpected error prevented us from getting pending Todos'
+    )
+  }
+}
+
 export const createTodo = async (
   userId: string,
   newTodo: CreateTodoRequest
@@ -47,7 +61,9 @@ export const createTodo = async (
     email: newTodo.email,
     name: newTodo.name,
     dueDate: newTodo.dueDate,
-    done: false,
+    done: 0,
+    expired: 0,
+    expiring: 0,
     attachmentUrl
   }
   await TodosAccess.createTodo(todo)

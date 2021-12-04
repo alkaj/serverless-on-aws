@@ -30,6 +30,26 @@ export const TodosAccess = {
     return items as TodoItem[]
   },
 
+  async getPendingTodos(): Promise<TodoItem[]> {
+    logger.info('Getting all pending todos for all users')
+    let doc = new DocumentClient({ service: new AWS.DynamoDB() })
+    AWSXRay.captureAWSClient((doc as any).service)
+    const result = await doc
+      .scan({
+        TableName: process.env.TODOS_TABLE,
+        // KeyConditionExpression: 'userId = :userId',
+        FilterExpression: 'done = :done AND expired = :expired',
+        ExpressionAttributeValues: {
+          // ':userId': '*'
+          ':done': 0,
+          ':expired': 0
+        }
+      })
+      .promise()
+    const items = result.Items
+    return items as TodoItem[]
+  },
+
   async createTodo(todo: TodoItem): Promise<TodoItem> {
     let doc = new DocumentClient({ service: new AWS.DynamoDB() })
     AWSXRay.captureAWSClient((doc as any).service)
@@ -56,14 +76,21 @@ export const TodosAccess = {
           userId,
           todoId
         },
-        UpdateExpression: 'set #name = :name, dueDate = :dueDate, done = :done',
+        UpdateExpression:
+          'set #name = :name, #dueDate = :dueDate, #done = :done, #expiring = :expiring, #expired = :expired',
         ExpressionAttributeNames: {
-          '#name': 'name'
+          '#name': 'name',
+          '#dueDate': 'dueDate',
+          '#done': 'done',
+          '#expiring': 'expiring',
+          '#expired': 'expired'
         },
         ExpressionAttributeValues: {
           ':name': todoUpdate.name,
           ':dueDate': todoUpdate.dueDate,
-          ':done': todoUpdate.done
+          ':done': todoUpdate.done,
+          ':expiring': todoUpdate.expiring,
+          ':expired': todoUpdate.expired
         }
       })
       .promise()

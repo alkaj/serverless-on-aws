@@ -3,6 +3,7 @@ import * as AWS from 'aws-sdk'
 import * as AWSXRay from 'aws-xray-sdk'
 
 const XAWS = AWSXRay.captureAWS(AWS)
+// TODO: use the logger provided intead of console.log...
 
 export const sendEmail = async (
   subjectText: string,

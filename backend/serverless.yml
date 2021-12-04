@@ -23,8 +23,11 @@ provider:
   # Use these variables in the functions and resouorces section below. For example,
   # ${self:provider.environment.ATTACHMENT_S3_BUCKET}
   environment:
-    TODOS_TABLE: Todos-${self:provider.stage}
+    TODOS_TABLE: Todos-${self:provider.stage}-plus-one
     TODOS_CREATED_AT_INDEX: CreatedAtIndex
+    TODOS_DONE_INDEX: DoneIndex
+    TODOS_EXPIRING_INDEX: ExpiringIndex
+    TODOS_EXPIRED_INDEX: ExpiredIndex
     ATTACHMENT_S3_BUCKET: alkaj-serverless-c4-todo-images-${self:provider.stage}
     SIGNED_URL_EXPIRATION: 300
     REGION: ${self:provider.region}
@@ -49,6 +52,20 @@ functions:
   Auth:
     handler: src/lambda/auth/auth0Authorizer.handler
 
+  VerifyEmail:
+    handler: src/lambda/http/verifyEmail.handler
+    events:
+      - http:
+          method: get
+          path: verify-email
+          cors: true
+          authorizer: Auth
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - ses:VerifyEmailIdentity
+        Resource: '*'
+
   DueDateChecker:
     handler: src/lambda/eventBridge/CheckDueDate.handler
     events:
@@ -59,6 +76,11 @@ functions:
         Action:
           - ses:SendEmail
         Resource: '*'
+      - Effect: Allow
+        Action:
+          - dynamodb:Scan
+          - dynamodb:UpdateItem
+        Resource: !GetAtt TodosTable.Arn
 
   # TODO: Configure this function -
   # Provide iamRoleStatements property for performing Actions on DynamoDB
@@ -177,12 +199,42 @@ resources:
             AttributeType: S
           - AttributeName: createdAt
             AttributeType: S
+          - AttributeName: done
+            AttributeType: N
+          - AttributeName: expiring
+            AttributeType: N
+          - AttributeName: expired
+            AttributeType: N
         KeySchema:
           - AttributeName: userId
             KeyType: HASH
           - AttributeName: todoId
             KeyType: RANGE
         LocalSecondaryIndexes:
+          - IndexName: ${self:provider.environment.TODOS_EXPIRED_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: expired
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.TODOS_EXPIRING_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: expiring
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+          - IndexName: ${self:provider.environment.TODOS_DONE_INDEX}
+            KeySchema:
+              - AttributeName: userId
+                KeyType: HASH
+              - AttributeName: done
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
           - IndexName: ${self:provider.environment.TODOS_CREATED_AT_INDEX}
             KeySchema:
               - AttributeName: userId
